@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  ondemand2api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7860:7860"
+    environment:
+      # 必需的环境变量
+      - PRIVATE_KEY=your_private_key_here
+      - ONDEMAND_APIKEYS=key1,key2,key3
+      
+      # 服务器配置（可选）
+      - PORT=7860                   # 端口，默认为7860
+      - GIN_MODE=release            # Gin运行模式：debug, release, test
+    
+    # 资源限制（可选）
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/v1/models"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # 重启策略
+    restart: unless-stopped
+    
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # 安全配置
+    security_opt:
+      - no-new-privileges:true
+    
+    # 只读根文件系统（提高安全性）
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
